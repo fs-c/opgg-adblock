@@ -1,10 +1,11 @@
+#!/usr/bin/env node
+
 import path from 'node:path';
 import * as asar from 'asar';
 import * as fs from 'node:fs/promises';
 
 const searchOpgg = async () => {
     const usersPath = 'C:\\Users\\';
-    // don't bother catching if this throws, then we're out of options anyways
     const usersContent = await fs.readdir(usersPath);
 
     for (const userFolder of usersContent) {
@@ -27,8 +28,10 @@ const patch = async (unpackedPath) => {
 
     let renderer = await fs.readFile(rendererPath, { encoding: 'utf8' });
 
-    renderer = renderer.replace(/Terms of Use/g, 'T3rms 0f Us3');
+    renderer = renderer.replace(/Terms of Use/g, 'T3rms 0f Us3'); // :)
 
+    // these are the strings used in renderer/utils/ads*.js
+    // a more robust solution would be to look for the exports themselves and replace those
     renderer = renderer.replace(/\["NA","KR"\]/g, '[]');
     renderer = renderer.replace(/\["NA"\]/g, '[]');
     renderer = renderer.replace(/\["KR"\]/g, '[]');
@@ -37,18 +40,18 @@ const patch = async (unpackedPath) => {
     await fs.writeFile(rendererPath, renderer);
 };
 
-(async () => {
-    const opggPath = await searchOpgg();
-    const asarPath = path.join(opggPath, 'resources\\app.asar');
-    console.log('found asar "%s"', asarPath);
+const opggPath = process.argv[3] || await searchOpgg();
+const asarPath = path.join(opggPath, 'resources\\app.asar');
+console.log('found asar "%s"', asarPath);
 
-    const extractionPath = await fs.mkdtemp('opggadblock-');
-    
-    asar.extractAll(asarPath, extractionPath);
-    await patch(extractionPath);
-    asar.createPackage(extractionPath, asarPath);
+const extractionPath = await fs.mkdtemp('opggadblock-');
 
-    console.log('patched')
+await asar.extractAll(asarPath, extractionPath);
+await patch(extractionPath);
+await asar.createPackage(extractionPath, asarPath);
 
-    console.log('done');
-})();
+console.log('patched');
+
+await fs.rm(extractionPath, { recursive: true });
+
+console.log('done');
