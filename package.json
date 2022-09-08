@@ -1,6 +1,6 @@
 {
   "name": "@fsoc/opgg-adblock",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "src/index.mjs",
   "bin": "src/index.mjs",
